@@ -11,7 +11,8 @@ import pandas as pd
 import xgboost as xgb
 
 # Using scikit-learn and flower for federated learning
-import flower
+import flwr as fl
+import utils
 
 from imblearn.under_sampling import CondensedNearestNeighbour
 from sklearn.ensemble import AdaBoostClassifier
@@ -114,7 +115,6 @@ test_attack_cats.plot(kind='barh', figsize=(20, 10), fontsize=30)
 train_df[binary_cols].describe().transpose()
 
 # Wait a minute... the su_attempted column has a max value of 2.0?
-
 train_df.groupby(['su_attempted']).size()
 
 # Let's fix this discrepancy and assume that su_attempted=2 -> su_attempted=0
@@ -194,58 +194,131 @@ train_x.describe()
 train_Y_bin = train_Y.apply(lambda x: 0 if x is 'benign' else 1)
 test_Y_bin = test_Y.apply(lambda x: 0 if x is 'benign' else 1)
 
-# answers to question 4
-
-
-def data_exploration_solution():
-    print("*******************")
-    print("Step 4: Data Exploration (Understanding the data)")
-    print("*******************")
-    print("1. Identify the attribute names (Header)")
-    print(train_df.columns)
-    print("2. Check the length of the Train and Test dataset")
-    print("length of Train dataset: ", train_df.size)
-    print("length of Test dataset: ", test_df.size)
-    print("3. Check the total number of samples that belong to each of the five classes of the training dataset.")
-    print(train_df.groupby('attack_category')['flag'].count())
-    print("*******************")
-
 # logistic regression hyperparameter tuning
 
 
-def logistic_reg_grid_search():
-    # Creating a grid of different hyperparameters
-    grid_params = {
-        'penalty': ['l1', 'l2'],
-        'max_iter': [100, 200, 300, 500, 800, 1000]
-    }
+# def logistic_reg_grid_search():
+#     # Creating a grid of different hyperparameters
+#     grid_params = {
+#         'penalty': ['l1', 'l2'],
+#         'max_iter': [100, 200, 300, 500, 800, 1000]
+#     }
 
-    # logistic regression classifier
-    clf = LogisticRegression(random_state=0)
+#     # logistic regression classifier
+#     clf = LogisticRegression(random_state=0)
 
-    print("Searching for optimal parameters..............")
+#     print("Searching for optimal parameters..............")
 
-    # Building a 10 fold Cross-Validated GridSearchCV object
-    grid_object = GridSearchCV(estimator=clf, param_grid=grid_params, cv=10)
+#     # Building a 10 fold Cross-Validated GridSearchCV object
+#     grid_object = GridSearchCV(estimator=clf, param_grid=grid_params, cv=10)
 
-    print("Training the model...............")
+#     print("Training the model...............")
 
-    # Fitting the grid to the training data
-    grid_object.fit(train_x, train_Y)
+#     # Fitting the grid to the training data
+#     grid_object.fit(train_x, train_Y)
 
-    # Extracting the best parameters
-    print(grid_object.best_params_)
+#     # Extracting the best parameters
+#     print(grid_object.best_params_)
 
-    # Extracting the best model
-    rf_best = grid_object.best_estimator_
-    print(rf_best)
-
+#     # Extracting the best model
+#     rf_best = grid_object.best_estimator_
+#     print(rf_best)
 
 # Logistic Regression
-def logistic_reg_clf():
+# def logistic_reg_clf():
+#     print("------Logistic Regression Classification-------")
+
+#     # logistic regression classifier
+#     clf_lr = LogisticRegression(
+#         C=1e5, random_state=0
+#     )
+
+#     # start timer
+#     starttime = timeit.default_timer()
+
+#     print("Training the Logistic Regression Classifier.......")
+
+#     # train the model
+#     clf_lr = clf_lr.fit(train_x, train_Y)
+
+#     print("The time difference is :", timeit.default_timer() - starttime)
+
+#     print("Predicting test data.......")
+
+#     # predict
+#     pred_y = clf_lr.predict(test_x)
+
+#     # get results
+#     c_matrix = confusion_matrix(test_Y, pred_y)
+#     error = zero_one_loss(test_Y, pred_y)
+#     score = accuracy_score(test_Y, pred_y)
+
+#     # display results
+#     print('Confusion Matrix\n---------------------------\n', c_matrix)
+#     print('---------------------------')
+#     print("Error: {:.4f}%".format(error * 100))
+#     print("Accuracy Score: {:.4f}%".format(score * 100))
+#     print(classification_report(test_Y, pred_y))
+#     print('accuracy: ', c_matrix.diagonal() / c_matrix.sum(axis=1))
+
+#     # Plot non-normalized confusion matrix
+#     disp = plot_confusion_matrix(clf_lr, test_x, test_Y, cmap=plt.cm.Greens, values_format='.0f',
+#                                  xticks_rotation='horizontal')
+#     plt.title("Confusion Matrix for Logistic Regression")
+# plt.show
+
+# Multi-Layer Percepton MLP
+# def mlp_clf():
+#     print(colored("------MLP Classification-------", 'red'))
+
+#     # Build classifier
+#     clf_nn = MLPClassifier(
+#         alpha=1e-5, hidden_layer_sizes=(1000, 5), max_iter=1000, random_state=1)
+
+#     print("Training the MLP Classifier.......")
+
+#     # start timer
+#     starttime = timeit.default_timer()  # start timer
+
+#     # train
+#     clf_nn.fit(train_x, train_Y)
+
+#     print("The time difference is :", timeit.default_timer() - starttime)
+
+#     print("Predicting test data.......")
+
+#     # predict
+#     nn_pred = clf_nn.predict(test_x)
+
+#     # results
+#     c_matrix = confusion_matrix(test_Y, nn_pred)
+#     error = zero_one_loss(test_Y, nn_pred)
+#     score = accuracy_score(test_Y, nn_pred)
+
+#     # display results
+#     print('Confusion Matrix\n---------------------------\n', c_matrix)
+#     print('---------------------------')
+#     print("Error: {:.4f}%".format(error * 100))
+#     print("Accuracy Score: {:.4f}%".format(score * 100))
+#     print(classification_report(test_Y, nn_pred))
+#     print('accuracy: ', c_matrix.diagonal() / c_matrix.sum(axis=1))
+
+#     # Plot non-normalized confusion matrix
+#     disp = plot_confusion_matrix(clf_nn, test_x, test_Y, cmap=plt.cm.Greens, values_format='.0f',
+#                                  xticks_rotation='horizontal')
+#     plt.title("Confusion Matrix for Neural Network")
+
+#     plt.show()
+
+
+if __name__ == "__main__":
+
     print("------Logistic Regression Classification-------")
+
     # logistic regression classifier
-    clf_lr = LogisticRegression(C=1e5, random_state=0)
+    clf_lr = LogisticRegression(
+        C=1e5, random_state=0
+    )
 
     # start timer
     starttime = timeit.default_timer()
@@ -278,56 +351,30 @@ def logistic_reg_clf():
     # Plot non-normalized confusion matrix
     disp = plot_confusion_matrix(clf_lr, test_x, test_Y, cmap=plt.cm.Greens, values_format='.0f',
                                  xticks_rotation='horizontal')
+
     plt.title("Confusion Matrix for Logistic Regression")
+    utils.set_initial_params(clf_lr)
 
-    plt.show()
+    class FlowerClient(fl.client.NumPyClient):
 
+        def get_parameters(self):  # type: ignore
+            return utils.get_model_parameters(clf_lr)
 
-# Multi-Layer Percepton MLP
-def mlp_clf():
-    print(colored("------MLP Classification-------", 'red'))
+        def fit(self, parameters, config):  # type: ignore
+            utils.set_model_params(model, parameters)
+            # Ignore convergence failure due to low local epochs
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                model.fit(X_train, y_train)
+            print(f"Training finished for round {config['rnd']}")
+            return utils.get_model_parameters(model), len(X_train), {}
 
-    # Build classifier
-    clf_nn = MLPClassifier(
-        alpha=1e-5, hidden_layer_sizes=(1000, 5), max_iter=1000, random_state=1)
+        def evaluate(self, parameters, config):  # type: ignore
+            utils.set_model_params(model, parameters)
+            loss = log_loss(y_test, model.predict_proba(X_test))
+            accuracy = model.score(X_test, y_test)
+            return loss, len(X_test), {"accuracy": accuracy}
 
-    print("Training the MLP Classifier.......")
-
-    # start timer
-    starttime = timeit.default_timer()  # start timer
-
-    # train
-    clf_nn.fit(train_x, train_Y)
-
-    print("The time difference is :", timeit.default_timer() - starttime)
-
-    print("Predicting test data.......")
-
-    # predict
-    nn_pred = clf_nn.predict(test_x)
-
-    # results
-    c_matrix = confusion_matrix(test_Y, nn_pred)
-    error = zero_one_loss(test_Y, nn_pred)
-    score = accuracy_score(test_Y, nn_pred)
-
-    # display results
-    print('Confusion Matrix\n---------------------------\n', c_matrix)
-    print('---------------------------')
-    print("Error: {:.4f}%".format(error * 100))
-    print("Accuracy Score: {:.4f}%".format(score * 100))
-    print(classification_report(test_Y, nn_pred))
-    print('accuracy: ', c_matrix.diagonal() / c_matrix.sum(axis=1))
-
-    # Plot non-normalized confusion matrix
-    disp = plot_confusion_matrix(clf_nn, test_x, test_Y, cmap=plt.cm.Greens, values_format='.0f',
-                                 xticks_rotation='horizontal')
-    plt.title("Confusion Matrix for Neural Network")
-
-    plt.show()
-
-
-if __name__ == "__main__":
-
-    logistic_reg_clf()
-    mlp_clf()
+    # logistic_reg_clf()
+    # mlp_clf()
+    fl.client.start_numpy_client("0.0.0.0:9000", client=FlowerClient())
