@@ -167,19 +167,19 @@ standard_scaler = StandardScaler().fit(durations)
 scaled_durations = standard_scaler.transform(durations)
 pd.Series(scaled_durations.flatten()).describe()
 
-# Experimenting with MinMaxScaler on the single 'duration' feature
+# # Experimenting with MinMaxScaler on the single 'duration' feature
 
-min_max_scaler = MinMaxScaler().fit(durations)
-min_max_scaled_durations = min_max_scaler.transform(durations)
-pd.Series(min_max_scaled_durations.flatten()).describe()
+# min_max_scaler = MinMaxScaler().fit(durations)
+# min_max_scaled_durations = min_max_scaler.transform(durations)
+# pd.Series(min_max_scaled_durations.flatten()).describe()
 
-# Experimenting with RobustScaler on the single 'duration' feature
+# # Experimenting with RobustScaler on the single 'duration' feature
 
-min_max_scaler = RobustScaler().fit(durations)
-robust_scaled_durations = min_max_scaler.transform(durations)
-pd.Series(robust_scaled_durations.flatten()).describe()
+# min_max_scaler = RobustScaler().fit(durations)
+# robust_scaled_durations = min_max_scaler.transform(durations)
+# pd.Series(robust_scaled_durations.flatten()).describe()
 
-# Let's proceed with StandardScaler- Apply to all the numeric columns
+# Let's proceed with StandardScaler - Apply to all the numeric columns
 
 standard_scaler = StandardScaler().fit(train_x[numeric_cols])
 
@@ -191,125 +191,8 @@ test_x[numeric_cols] = \
 
 train_x.describe()
 
-train_Y_bin = train_Y.apply(lambda x: 0 if x is 'benign' else 1)
-test_Y_bin = test_Y.apply(lambda x: 0 if x is 'benign' else 1)
-
-# logistic regression hyperparameter tuning
-
-
-# def logistic_reg_grid_search():
-#     # Creating a grid of different hyperparameters
-#     grid_params = {
-#         'penalty': ['l1', 'l2'],
-#         'max_iter': [100, 200, 300, 500, 800, 1000]
-#     }
-
-#     # logistic regression classifier
-#     clf = LogisticRegression(random_state=0)
-
-#     print("Searching for optimal parameters..............")
-
-#     # Building a 10 fold Cross-Validated GridSearchCV object
-#     grid_object = GridSearchCV(estimator=clf, param_grid=grid_params, cv=10)
-
-#     print("Training the model...............")
-
-#     # Fitting the grid to the training data
-#     grid_object.fit(train_x, train_Y)
-
-#     # Extracting the best parameters
-#     print(grid_object.best_params_)
-
-#     # Extracting the best model
-#     rf_best = grid_object.best_estimator_
-#     print(rf_best)
-
-# Logistic Regression
-# def logistic_reg_clf():
-#     print("------Logistic Regression Classification-------")
-
-#     # logistic regression classifier
-#     clf_lr = LogisticRegression(
-#         C=1e5, random_state=0
-#     )
-
-#     # start timer
-#     starttime = timeit.default_timer()
-
-#     print("Training the Logistic Regression Classifier.......")
-
-#     # train the model
-#     clf_lr = clf_lr.fit(train_x, train_Y)
-
-#     print("The time difference is :", timeit.default_timer() - starttime)
-
-#     print("Predicting test data.......")
-
-#     # predict
-#     pred_y = clf_lr.predict(test_x)
-
-#     # get results
-#     c_matrix = confusion_matrix(test_Y, pred_y)
-#     error = zero_one_loss(test_Y, pred_y)
-#     score = accuracy_score(test_Y, pred_y)
-
-#     # display results
-#     print('Confusion Matrix\n---------------------------\n', c_matrix)
-#     print('---------------------------')
-#     print("Error: {:.4f}%".format(error * 100))
-#     print("Accuracy Score: {:.4f}%".format(score * 100))
-#     print(classification_report(test_Y, pred_y))
-#     print('accuracy: ', c_matrix.diagonal() / c_matrix.sum(axis=1))
-
-#     # Plot non-normalized confusion matrix
-#     disp = plot_confusion_matrix(clf_lr, test_x, test_Y, cmap=plt.cm.Greens, values_format='.0f',
-#                                  xticks_rotation='horizontal')
-#     plt.title("Confusion Matrix for Logistic Regression")
-# plt.show
-
-# Multi-Layer Percepton MLP
-# def mlp_clf():
-#     print(colored("------MLP Classification-------", 'red'))
-
-#     # Build classifier
-#     clf_nn = MLPClassifier(
-#         alpha=1e-5, hidden_layer_sizes=(1000, 5), max_iter=1000, random_state=1)
-
-#     print("Training the MLP Classifier.......")
-
-#     # start timer
-#     starttime = timeit.default_timer()  # start timer
-
-#     # train
-#     clf_nn.fit(train_x, train_Y)
-
-#     print("The time difference is :", timeit.default_timer() - starttime)
-
-#     print("Predicting test data.......")
-
-#     # predict
-#     nn_pred = clf_nn.predict(test_x)
-
-#     # results
-#     c_matrix = confusion_matrix(test_Y, nn_pred)
-#     error = zero_one_loss(test_Y, nn_pred)
-#     score = accuracy_score(test_Y, nn_pred)
-
-#     # display results
-#     print('Confusion Matrix\n---------------------------\n', c_matrix)
-#     print('---------------------------')
-#     print("Error: {:.4f}%".format(error * 100))
-#     print("Accuracy Score: {:.4f}%".format(score * 100))
-#     print(classification_report(test_Y, nn_pred))
-#     print('accuracy: ', c_matrix.diagonal() / c_matrix.sum(axis=1))
-
-#     # Plot non-normalized confusion matrix
-#     disp = plot_confusion_matrix(clf_nn, test_x, test_Y, cmap=plt.cm.Greens, values_format='.0f',
-#                                  xticks_rotation='horizontal')
-#     plt.title("Confusion Matrix for Neural Network")
-
-#     plt.show()
-
+# train_Y_bin = train_Y.apply(lambda x: 0 if x is 'benign' else 1)
+# test_Y_bin = test_Y.apply(lambda x: 0 if x is 'benign' else 1)
 
 if __name__ == "__main__":
 

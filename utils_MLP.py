@@ -1,6 +1,7 @@
 from typing import Tuple, Union, List
 import numpy as np
 from sklearn.linear_model import LogisticRegression
+from sklearn.neural_network import MLPClassifier
 import openml
 
 XY = Tuple[np.ndarray, np.ndarray]
@@ -16,9 +17,11 @@ def get_model_parameters(model: LogisticRegression) -> LogRegParams:
     else:
         params = (model.coef_,)
     return params
+q
 
-
-def set_model_params(model: LogisticRegression, params: LogRegParams) -> LogisticRegression:
+def set_model_params(
+    model: LogisticRegression, params: LogRegParams
+) -> LogisticRegression:
     """Sets the parameters of a sklean LogisticRegression model."""
     model.coef_ = params[0]
     if model.fit_intercept:

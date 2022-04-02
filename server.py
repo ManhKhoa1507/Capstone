@@ -34,4 +34,4 @@ if __name__ == "__main__":
         on_fit_config_fn=fit_round,
     )
     fl.server.start_server(
-        "0.0.0.0:9000", strategy=strategy, config={"num_rounds": 5})
+        "0.0.0.0:9000", strategy=strategy, config={"num_rounds": 10})
