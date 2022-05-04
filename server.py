@@ -69,7 +69,7 @@ def run_server(client_manager, server_address):
     # Run server
     grpc_server = start_grpc_server(
         client_manager=server.client_manager(),
-        server_address=args.server_address,
+        server_address=DEFAULT_SERVER_ADDRESS,
         max_message_length=GRPC_MAX_MESSAGE_LENGTH,
     )
     return grpc_server
@@ -96,14 +96,10 @@ if __name__ == "__main__":
     server = fl.server.Server(client_manager=client_manager, strategy=strategy)
 
     # Run server
-    run_server(client_manager, argparse)
+    grpc_server = run_server(client_manager, args.server_address)
 
     # Fit model
     hist = server.fit(num_rounds=args.rounds)
-    log(INFO, "app_fit: losses_distributed %s", str(hist.losses_distributed))
-    log(INFO, "app_fit: accuracies_distributed %s",
-        str(hist.accuracies_distributed))
-    print(hist.accuracies_distributed)
 
     # Stop server
     grpc_server.stop(1)
