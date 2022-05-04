@@ -1,8 +1,17 @@
 import flwr as fl
+
+from flwr.common import GRPC_MAX_MESSAGE_LENGTH
+from flwr.common.logger import log
+from flwr.server.grpc_server.grpc_server import start_grpc_server
+
 import utils
 from sklearn.metrics import log_loss
 from sklearn.linear_model import LogisticRegression
 from typing import Dict
+
+import argparse
+
+DEFAULT_SERVER_ADDRESS = "0.0.0.0:9000"
 
 
 def fit_round(rnd: int) -> Dict:
@@ -11,6 +20,7 @@ def fit_round(rnd: int) -> Dict:
 
 
 def get_eval_fn(model: LogisticRegression):
+    # get_eval_fn
     _, (X_test, y_test) = utils.load_mnist()
 
     # The `evaluate` function will be called after every round
@@ -24,14 +34,76 @@ def get_eval_fn(model: LogisticRegression):
     return evaluate
 
 
-# Start Flower server for five rounds of federated learning
-if __name__ == "__main__":
-    model = LogisticRegression()
-    utils.set_initial_params(model)
+def get_argument():
+    # Get the argument from terminal
+    parser = argparse.ArgumentParser(description="Flower")
+
+    parser.add_argument(
+        "--server_address",
+        type=str,
+        default=DEFAULT_SERVER_ADDRESS,
+        help=f"gRPC server address (default: {DEFAULT_SERVER_ADDRESS})",
+    )
+
+    parser.add_argument(
+        "--rounds",
+        type=int,
+        default=1,
+        help="Number of rounds (default: 1)",
+    )
+
+    parser.add_argument(
+        "--min_num_clients",
+        type=int,
+        default=2,
+        help="Minimum number of available clients required for sampling (default: 2)",
+    )
+
+    args = parser.parse_args()
+    dict_args = vars(args)
+
+    return args
+
+
+def run_server(client_manager, server_address):
+    # Run server
+    grpc_server = start_grpc_server(
+        client_manager=server.client_manager(),
+        server_address=args.server_address,
+        max_message_length=GRPC_MAX_MESSAGE_LENGTH,
+    )
+    return grpc_server
+
+
+def get_strategy(number_client, model):
+    # get strategy
     strategy = fl.server.strategy.FedAvg(
-        min_available_clients=5,
+        min_available_clients=number_client,
         eval_fn=get_eval_fn(model),
         on_fit_config_fn=fit_round,
     )
-    fl.server.start_server(
-        "0.0.0.0:9000", strategy=strategy, config={"num_rounds": 10})
+    return strategy
+
+
+if __name__ == "__main__":
+    args = get_argument()
+    model = LogisticRegression()
+    utils.set_initial_params(model)
+
+    strategy = get_strategy(args.min_num_clients, model)
+
+    client_manager = fl.server.SimpleClientManager()
+    server = fl.server.Server(client_manager=client_manager, strategy=strategy)
+
+    # Run server
+    run_server(client_manager, argparse)
+
+    # Fit model
+    hist = server.fit(num_rounds=args.rounds)
+    log(INFO, "app_fit: losses_distributed %s", str(hist.losses_distributed))
+    log(INFO, "app_fit: accuracies_distributed %s",
+        str(hist.accuracies_distributed))
+    print(hist.accuracies_distributed)
+
+    # Stop server
+    grpc_server.stop(1)

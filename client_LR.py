@@ -257,7 +257,6 @@ if __name__ == "__main__":
             loss = log_loss(y_test, model.predict_proba(X_test))
             accuracy = model.score(X_test, y_test)
             return loss, len(X_test), {"accuracy": accuracy}
-
-    # logistic_reg_clf()
-    # mlp_clf()
-    fl.client.start_numpy_client("0.0.0.0:9000", client=FlowerClient())
+        
+    server_address = "0.0.0.0:9000"
+    fl.client.start_numpy_client(server_address, client=FlowerClient())
