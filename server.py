@@ -4,6 +4,8 @@ from flwr.common import GRPC_MAX_MESSAGE_LENGTH
 from flwr.common.logger import log
 from flwr.server.grpc_server.grpc_server import start_grpc_server
 
+import importlib
+
 import utils
 from sklearn.metrics import log_loss
 from sklearn.linear_model import LogisticRegression
@@ -34,9 +36,26 @@ def get_eval_fn(model: LogisticRegression):
     return evaluate
 
 
+def get_strategy(number_client, model):
+    # get strategy
+    strategy = fl.server.strategy.FedAvg(
+        min_available_clients=number_client,
+        eval_fn=get_eval_fn(model),
+        on_fit_config_fn=fit_round,
+    )
+    return strategy
+
+
 def get_argument():
     # Get the argument from terminal
     parser = argparse.ArgumentParser(description="Flower")
+
+    parser.add_argument(
+        "--optimizer",
+        type=str,
+        default="fedavg",
+        help=f"choose between fedavg and fed+ (default: fedavg)",
+    )
 
     parser.add_argument(
         "--server_address",
@@ -75,31 +94,26 @@ def run_server(client_manager, server_address):
     return grpc_server
 
 
-def get_strategy(number_client, model):
-    # get strategy
-    strategy = fl.server.strategy.FedAvg(
-        min_available_clients=number_client,
-        eval_fn=get_eval_fn(model),
-        on_fit_config_fn=fit_round,
-    )
-    return strategy
-
-
 if __name__ == "__main__":
     args = get_argument()
-    model = LogisticRegression()
-    utils.set_initial_params(model)
 
-    strategy = get_strategy(args.min_num_clients, model)
+    # model = LogisticRegression()
+    # utils.set_initial_params(model)
+
+    # strategy = get_strategy(args.min_num_clients, model)
 
     client_manager = fl.server.SimpleClientManager()
-    server = fl.server.Server(client_manager=client_manager, strategy=strategy)
+    # server = fl.server.Server(client_manager=client_manager, strategy=strategy)
+    
+    opt_path='flearn.trainers.%s' % parser['optimizer']
+    mod = importlib.import_module(opt_path)
+    optimizer = getattr(mod, 'Server')
 
     # Run server
     grpc_server = run_server(client_manager, args.server_address)
 
-    # Fit model
-    hist = server.fit(num_rounds=args.rounds)
+    # # Fit model
+    # hist = server.fit(num_rounds=args.rounds)
 
     # Stop server
     grpc_server.stop(1)
