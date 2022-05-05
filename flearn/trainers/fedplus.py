@@ -6,6 +6,8 @@ from .fedbase import BaseFedarated
 from flearn.optimizer.pgd import PerturbedGradientDescent
 from flearn.utils.tf_utils import process_grad, process_sparse_grad
 
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] ="-1"
 
 class Server(BaseFedarated):
     def __init__(self, params, learner, dataset):

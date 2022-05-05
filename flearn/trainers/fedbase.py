@@ -3,6 +3,7 @@ import tensorflow as tf
 from tqdm import tqdm
 from typing import Dict
 
+tf.config.set_visible_devices([], 'CPU')
 
 def process_grad(grads):
     # a flattened grad in numpy (1-D array)
