@@ -26,7 +26,7 @@ def get_eval_fn(model: LogisticRegression):
         set_model_params(model, parameters)
         loss = log_loss(y_test, model.predict_proba(X_test))
         accuracy = model.score(X_test, y_test)
-        return loss, {"accuracy": accuracy}
+        return loss, {"accuracy": accuracy * 10}
 
     return evaluate
  
