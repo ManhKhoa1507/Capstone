@@ -1,0 +1,24 @@
+OrdererOrgs:
+  - Name: Orderer
+    Domain: ord.fedchain
+    EnableNodeOUs: true
+    Template:
+      Start: 1
+      Count: 3
+    SANS:
+        - "localhost"
+        - "127.0.0.1"
+
+PeerOrgs:
+  - Name: Org1
+    Domain: org1.fedchain
+    EnableNodeOUs: true
+    Template:
+      Start: 1
+      Count: 3
+      SANS:
+         - "localhost"
+         - "127.0.0.1"      
+    Users:
+      Start: 1
+      Count: 3

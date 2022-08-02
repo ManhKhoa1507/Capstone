@@ -1,0 +1,178 @@
+Organizations:
+    - &OrdererOrg
+        Name: OrdererOrg
+        ID: OrdererMSP
+        MSPDir: crypto-config/ordererOrganizations/ord.fedchain/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('OrdererMSP.member')"
+            Writers:
+                Type: Signature
+                Rule: "OR('OrdererMSP.member')"
+            Admins:
+                Type: Signature
+                Rule: "OR('OrdererMSP.admin')"
+
+
+    - &Org1
+        Name: Org1MSP
+        ID: Org1MSP
+        MSPDir: crypto-config/peerOrganizations/org1.fedchain/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('Org1MSP.admin', 'Org1MSP.peer', 'Org1MSP.client','Org1MSP.member')"
+            Writers:
+                Type: Signature
+                Rule: "OR('Org1MSP.admin', 'Org1MSP.client','Org1MSP.peer','Org1MSP.member')"
+            Admins:
+                Type: Signature
+                Rule: "OR('Org1MSP.admin','Org1MSP.peer')"
+            Endorsement:
+                Type: Signature
+                Rule: "OR('Org1MSP.peer')"    
+        AnchorPeers:
+            - Host: peer1.org1.fedchain
+              Port: 7051
+
+
+Capabilities:
+    Channel: &ChannelCapabilities
+       V2_0: true
+    Orderer: &OrdererCapabilities
+        V2_0: true
+    Application: &ApplicationCapabilities
+       V2_0: true
+
+Application: &ApplicationDefaults
+    Organizations:
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+        LifecycleEndorsement:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Endorsement"
+        Endorsement:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Endorsement"   
+        BlockValidation:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"    
+             
+
+    Capabilities:
+        <<: *ApplicationCapabilities
+
+Orderer: &OrdererDefaults
+    BatchTimeout: 2s
+    BatchSize:
+        MaxMessageCount: 10
+        AbsoluteMaxBytes: 99 MB
+        PreferredMaxBytes: 512 KB
+    Organizations:
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+        BlockValidation:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+
+Channel: &ChannelDefaults
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+        BlockValidation:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+ 
+
+    Capabilities:
+        <<: *ChannelCapabilities
+
+Profiles:
+    MainChannel:
+        Consortium: BaseConsortium
+        <<: *ChannelDefaults
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *Org1
+            Capabilities:
+                <<: *ApplicationCapabilities
+
+    Raft:
+        <<: *ChannelDefaults
+        Capabilities:
+            <<: *ChannelCapabilities
+        Orderer:
+            <<: *OrdererDefaults
+            OrdererType: etcdraft
+            EtcdRaft:
+                Consenters:
+                - Host: orderer1.ord.fedchain
+                  Port: 7050
+                  ClientTLSCert: crypto-config/ordererOrganizations/ord.fedchain/orderers/orderer1.ord.fedchain/tls/server.crt
+                  ServerTLSCert: crypto-config/ordererOrganizations/ord.fedchain/orderers/orderer1.ord.fedchain/tls/server.crt
+                - Host: orderer2.ord.fedchain
+                  Port: 8050
+                  ClientTLSCert: crypto-config/ordererOrganizations/ord.fedchain/orderers/orderer2.ord.fedchain/tls/server.crt
+                  ServerTLSCert: crypto-config/ordererOrganizations/ord.fedchain/orderers/orderer2.ord.fedchain/tls/server.crt
+                - Host: orderer3.ord.fedchain
+                  Port: 9050
+                  ClientTLSCert: crypto-config/ordererOrganizations/ord.fedchain/orderers/orderer3.ord.fedchain/tls/server.crt
+                  ServerTLSCert: crypto-config/ordererOrganizations/ord.fedchain/orderers/orderer3.ord.fedchain/tls/server.crt
+
+                  
+                
+            Addresses:
+                - orderer1.ord.fedchain:7050
+                - orderer2.ord.fedchain:8050
+                - orderer3.ord.fedchain:9050
+                     
+            Organizations:
+            - *OrdererOrg
+            Policies:
+                Readers:
+                    Type: ImplicitMeta
+                    Rule: "ANY Readers"
+                Writers:
+                    Type: ImplicitMeta
+                    Rule: "ANY Writers"
+                Admins:
+                    Type: ImplicitMeta
+                    Rule: "MAJORITY Admins"
+                BlockValidation:
+                    Type: ImplicitMeta
+                    Rule: "ANY Writers"
+            Capabilities:
+                <<: *OrdererCapabilities
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+            - <<: *OrdererOrg
+        Consortiums:
+            BaseConsortium:
+                Organizations:
+                - *Org1
