@@ -1,0 +1,58 @@
+
+Please login go cli container to do the chaincode related ops(docker exec -it cli bash)
+
+PACKAGE CHAIN CODE
+------------------
+peer lifecycle chaincode package fabcar.tar.gz --path /opt/gopath/src/github.com/chaincode/go --lang golang --label fabcar_1
+
+
+INSTALL CHAINCODE
+-----------------
+peer lifecycle chaincode install fabcar.tar.gz
+
+
+APPROVE CHAINCODE FOR LEFT ORG
+-------------------------
+
+peer lifecycle chaincode approveformyorg  --channelID basechannel --name fabcar --version 1.0 --init-required \
+--package-id fabcar_1:206a5ce87aefb8b9780b75451523c2aa3ef718ceebaaeae5082ae88ea259b305 --sequence 1 -o orderer1.base.order:7050 \
+--tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/base.order/tlsca/tlsca.base.order-cert.pem \
+--signature-policy "OR('RightOrgMSP.member','LeftOrgMSP.member')"
+
+
+Do the above three for RIGHT org after updating the envrionment
+---------------------------------------------------------------
+
+Update the env with following
+
+export CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/base.right/users/Admin@base.right/msp
+export CORE_PEER_ADDRESS=peer1.base.right:9051
+export CORE_PEER_LOCALMSPID=RightOrgMSP
+export CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/base.right/peers/peer1.base.right/tls/ca.crt
+
+
+
+COMMIT THE CHAINCODE
+-------------------
+
+Set the TLS ROOT PATH for Admin
+
+export CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/base.right/users/Admin@base.right/tls/ca.crt
+
+
+peer lifecycle chaincode commit -o orderer1.base.order:7050 --channelID basechannel \
+ --name fabcar --version 1.0 \
+ --sequence 1 --init-required --tls true \
+ --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/base.order/tlsca/tlsca.base.order-cert.pem \
+ --peerAddresses peer1.base.right:9051 \
+ --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/base.right/peers/peer1.base.right/tls/ca.crt \
+ --peerAddresses peer1.base.left:7051  \
+ --tlsRootCertFiles   /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/base.left/peers/peer1.base.left/tls/ca.crt
+
+
+
+
+CHECK COMMIT READNESS(optional)
+---------------------
+
+peer lifecycle chaincode checkcommitreadiness --channelID basechannel --name fabcar --version 1.0 --init-required --sequence 1 --tls true --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/base.order/tlsca/tlsca.base.order-cert.pem  --output json

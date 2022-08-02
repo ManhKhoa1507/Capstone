@@ -39,7 +39,8 @@ warnings.filterwarnings('ignore')
 np.random.seed(100)
 
 # Get the path to dataset
-dataset_root = '/home/h4des/Desktop/DoAnChuyenNganh/nsl_kdd_classification/Data/NSL-KDD-Dataset'
+dir = os.getcwd()
+dataset_root = dir + '/Data/NSL-KDD-Dataset'
 
 train_file = os.path.join(dataset_root, 'KDDTrain+.txt')
 test_file = os.path.join(dataset_root, 'KDDTest+.txt')
@@ -78,7 +79,7 @@ numeric_cols = col_names[numeric_idx].tolist()
 category = defaultdict(list)
 category['benign'].append('normal')
 
-with open("/home/h4des/Desktop/DoAnChuyenNganh/nsl_kdd_classification/Data/NSL-KDD-Dataset/training_attack_types.txt", 'r') as f:
+with open(dir + "/Data/NSL-KDD-Dataset/training_attack_types.txt", 'r') as f:
     for line in f.readlines():
         attack, cat = line.strip().split(' ')
         category[cat].append(attack)
