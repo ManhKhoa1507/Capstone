@@ -9,7 +9,7 @@ from typing import Dict
 
 import argparse
 
-DEFAULT_SERVER_ADDRESS = "0.0.0.0:9000"
+DEFAULT_SERVER_ADDRESS = "localhost:9090"
 
 
 def get_argument():
@@ -53,13 +53,8 @@ def get_argument():
 if __name__ == "__main__":
     args = get_argument()
 
-    client_manager = fl.server.SimpleClientManager()
-    server = fl.server.Server(client_manager=client_manager)
-
-    opt_path = 'flearn.trainers.'
-    if (args.optimizer == 'fedavg'):
-        opt_path += 'fedavg'
-
-        mod = importlib.import_module(opt_path)
-        optimizer = mod.Server(args.min_num_clients,
-                               args.rounds, args.server_address)
+    strategy = fl.server.strategy.FedAvg(
+        fraction_fit=0.1,
+        min_fit_clients=1,
+    )
+    fl.server.start_server(config={"num_rounds": 1}, strategy=strategy)

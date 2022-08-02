@@ -2,6 +2,7 @@ import os
 import timeit
 import warnings
 from collections import defaultdict
+from typing import Dict, List, Optional, Tuple
 
 import catboost as cb
 import lightgbm as lgb
@@ -29,6 +30,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import RobustScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
+from sklearn.metrics import log_loss
 from sklearn.tree import DecisionTreeClassifier
 from termcolor import colored
 
@@ -136,7 +138,6 @@ numeric_cols.remove('num_outbound_cmds')
 
 """
 Data Preparation
-
 """
 
 train_Y = train_df['attack_category']
@@ -168,18 +169,6 @@ standard_scaler = StandardScaler().fit(durations)
 scaled_durations = standard_scaler.transform(durations)
 pd.Series(scaled_durations.flatten()).describe()
 
-# # Experimenting with MinMaxScaler on the single 'duration' feature
-
-# min_max_scaler = MinMaxScaler().fit(durations)
-# min_max_scaled_durations = min_max_scaler.transform(durations)
-# pd.Series(min_max_scaled_durations.flatten()).describe()
-
-# # Experimenting with RobustScaler on the single 'duration' feature
-
-# min_max_scaler = RobustScaler().fit(durations)
-# robust_scaled_durations = min_max_scaler.transform(durations)
-# pd.Series(robust_scaled_durations.flatten()).describe()
-
 # Let's proceed with StandardScaler - Apply to all the numeric columns
 
 standard_scaler = StandardScaler().fit(train_x[numeric_cols])
@@ -191,9 +180,6 @@ test_x[numeric_cols] = \
     standard_scaler.transform(test_x[numeric_cols])
 
 train_x.describe()
-
-# train_Y_bin = train_Y.apply(lambda x: 0 if x is 'benign' else 1)
-# test_Y_bin = test_Y.apply(lambda x: 0 if x is 'benign' else 1)
 
 if __name__ == "__main__":
 
@@ -238,26 +224,35 @@ if __name__ == "__main__":
 
     plt.title("Confusion Matrix for Logistic Regression")
     utils.set_initial_params(clf_lr)
+    model = LogisticRegression()
 
-    class FlowerClient(fl.client.NumPyClient):
+    f = open("test.txt", "a")
+    f.write(str(clf_lr.coef_))
+    f.close()
 
-        def get_parameters(self):  # type: ignore
-            return utils.get_model_parameters(clf_lr)
+def get_parameters(net) -> List[np.ndarray]:
+    return [clf_lr.coef_]
 
-        def fit(self, parameters, config):  # type: ignore
-            utils.set_model_params(model, parameters)
-            # Ignore convergence failure due to low local epochs
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                model.fit(X_train, y_train)
-            print(f"Training finished for round {config['rnd']}")
-            return utils.get_model_parameters(model), len(X_train), {}
+class FlowerClient(fl.client.NumPyClient):
 
-        def evaluate(self, parameters, config):  # type: ignore
-            utils.set_model_params(model, parameters)
-            loss = log_loss(y_test, model.predict_proba(X_test))
-            accuracy = model.score(X_test, y_test)
-            return loss, len(X_test), {"accuracy": accuracy}
-        
-    server_address = "0.0.0.0:9000"
-    fl.client.start_numpy_client(server_address, client=FlowerClient())
+    def get_parameters(self):  # type: ignore
+        return utils.get_model_parameters(clf_lr)
+
+    def fit(self, parameters, config):  # type: ignore
+        utils.set_model_params(model, parameters)
+        # Ignore convergence failure due to low local epochs
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            model.fit(train_x, train_Y)
+        print(f"Training finished")
+        return get_parameters(clf_lr), len(x_train), {}
+
+    def evaluate(self, parameters, config):  # type: ignore
+        # utils.set_model_params(model, parameters)
+        # loss = log_loss(y_test, model.predict_proba(X_test))
+        loss = 0.01
+        score = accuracy_score(test_Y, pred_y)
+        return loss, len(train_x), {"accuracy": score * 100}
+    
+server_address = "[::]:8080"
+fl.client.start_numpy_client(server_address, client=FlowerClient())
